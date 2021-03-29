@@ -1,0 +1,72 @@
+
+class NetworkInfo:
+    HEADER_SIZE = 16
+    NETWORK_BUFFER_SIZE = 4096
+    PACKET_DATA_SIZE_LIMIT = 4000
+
+class MsgType:
+    WARNING = 0
+    ERROR = 1
+    NOTIFY = 2
+
+    REQUEST_ACCESS = 1000
+    REQUEST_SERVER_STATUS = 1001
+    REQUEST_NNCAL = 1002
+
+    RESPONSE_ACCESS = 2000
+    RESPONSE_SERVER_STATUS = 2001
+    RESPONSE_SEGMENTATION = 2002
+    RESPONSE_2DPOSE = 2003
+
+class WarningType:
+    SERVER_GETTING_BUSY = 0
+    SERVER_CLIENTS_FULL = 1
+
+    CLIENT_RESPONSE_SLOW = 1000
+
+class ErrorType:
+    UNSUITABLE_PACKET_HEADER = 0
+    UNSUITABLE_PACKET_STRUCT = 1
+    UNSUITABLE_PACKET_STRUCT_FIELD = 2
+    UNSUITABLE_PACKET_TYPE = 3
+
+    UnOpen_NN = 1000
+
+class NotifyType:
+    CLIENT_CLOSE = 0
+
+    SERVER_CLOSE = 1000
+
+class AccessResult:
+    ACCEPT = 0
+
+    REJECT_UNSUITABLE_ACCESS_CODE = 1000
+    REJECT_OLD_ACCESS_CODE = 1001
+    REJECT_FULL_CCU = 1002
+
+class NNCalReulst:
+    SUCCESS = 0
+
+    FAIL_SERVER_BUSY = 1000
+    FAIL_IMAGE_CRACK = 1001
+    FAIL_INPUTDATA_ERROR = 1002
+
+class ServerStatus:
+    IDLE = 0
+    NORMAL = 1
+    BUSY = 2
+    JAMMED = 3
+
+class NNType:
+    YOLACT = 1
+    FASTPOSE = 2
+    ALPHAPOSE = 4
+
+class Order:
+    First = 1
+    Middle = 2
+    End = 4
+
+class JointNumber:
+    FASTPOSE = 13
+    ALPHAPOSE = 18
