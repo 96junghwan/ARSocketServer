@@ -8,6 +8,7 @@ from typing import NamedTuple
 from packet_struct import *
 from packet_constants import *
 
+
 # 클라 담당 Thread가 다 하나씩 갖고 있음
 # 클라에서 보낸 쪼개진 이미지 패킷들 조립해서 각각의 InputQ에 집어넣는 클래스
 class ImagePacketMerger:
@@ -31,7 +32,7 @@ class ImagePacketMerger:
         index = -1
 
         # 첫 패킷인 경우 : 리스트의 빈 인덱스 찾아서 반환함
-        if((order & Order.First) == Order.First):
+        if ((order & Order.First) == Order.First):
             for i in range(5):
                 if not self.mergedPacketList[i].isProcessing:
                     index = i
@@ -40,7 +41,7 @@ class ImagePacketMerger:
         # 중간/끝 패킷인 경우 : 입력된 frameID 기반으로 검색해서 인덱스 반환
         else:
             for i in range(5):
-                if(self.mergedPacketList[i].frameID == frameID):
+                if (self.mergedPacketList[i].frameID == frameID):
                     index = i
                     break
 
@@ -49,41 +50,42 @@ class ImagePacketMerger:
     # 분리된 패킷 입력하는 함수
     def put_packet(self, packetStruct, imageByte):
         index = self.find_index(packetStruct.order, packetStruct.frameID)
-        
+
         # 인덱스 못찾았을 경우
-        if(index == -1):
-            #print('Cannot find index')
+        if (index == -1):
+            # print('Cannot find index')
             return (None, None, None)
 
         # 리스트에 패킷 첫 데이터 입력
-        if((packetStruct.order & Order.First) == Order.First):
+        if ((packetStruct.order & Order.First) == Order.First):
             self.mergedPacketList[index].frameID = packetStruct.frameID
             self.mergedPacketList[index].nnType = packetStruct.nnType
             self.mergedPacketList[index].imageWholeSize = packetStruct.imageWholeSize
             self.mergedPacketList[index].imageByte = bytearray(packetStruct.imageWholeSize)
             self.mergedPacketList[index].isProcessing = True
-            #print('Image Byte Size : ' + str(self.mergedPacketList[index].imageWholeSize))
+            # print('Image Byte Size : ' + str(self.mergedPacketList[index].imageWholeSize))
 
         # 이미지 데이터 입력
-        self.mergedPacketList[index].imageByte[packetStruct.offset:packetStruct.offset+packetStruct.dataSize] = imageByte
+        self.mergedPacketList[index].imageByte[
+        packetStruct.offset:packetStruct.offset + packetStruct.dataSize] = imageByte
 
         # 마지막 이미지 패킷이었을 경우 : 이미지 빼서 처리 큐에 넣자~
-        if((packetStruct.order & Order.End) == Order.End):
+        if ((packetStruct.order & Order.End) == Order.End):
             data = np.frombuffer(self.mergedPacketList[index].imageByte, dtype='uint8')
             img = cv2.imdecode(data, 1)
 
-            #cv2.imshow('dsf', img)
-            #cv2.waitKey(1)
+            # cv2.imshow('dsf', img)
+            # cv2.waitKey(1)
 
             self.mergedPacketList[index].isProcessing = False
 
             # 인덱스는 무조건 0에서 놀아야 하는게 맞기 때문에, 만약 0이 아니라면 비워주기(끊긴 경우일 듯)
-            if(index > 0):
-                self.mergedPacketList[index-1].isProcessing = False
+            if (index > 0):
+                self.mergedPacketList[index - 1].isProcessing = False
 
             # 이미지가 세로로 더 길고, 이미지 해상도가 480P 이상인 경우 전처리
-            if(img.shape[0] > img.shape[1]):
-                if(img.shape[1] > 480):
+            if (img.shape[0] > img.shape[1]):
+                if (img.shape[1] > 480):
                     result = cv2.resize(img, (480, 640), interpolation=cv2.INTER_AREA)
                     return (self.mergedPacketList[index].frameID, self.mergedPacketList[index].nnType, result)
 
@@ -91,10 +93,10 @@ class ImagePacketMerger:
                     return (self.mergedPacketList[index].frameID, self.mergedPacketList[index].nnType, img)
 
             # 이미지가 가로가 더 길고, 이미지 해상도가 480P 이상인 경우 전처리
-            elif(img.shape[0] > 480):
+            elif (img.shape[0] > 480):
                 result = cv2.resize(img, (640, 480), interpolation=cv2.INTER_AREA)
                 return (self.mergedPacketList[index].frameID, self.mergedPacketList[index].nnType, result)
-            
+
             # 아무것도 포함되지 않는 경우 : 전처리 수행 안함
             else:
                 return (self.mergedPacketList[index].frameID, self.mergedPacketList[index].nnType, img)
@@ -117,9 +119,9 @@ class Pose2DPacketSpliter:
             self.jointNumbers = 0
             self.jointBytes = bytearray()
             self.nextOffset = 0
-    
+
     def __init__(self, nnType, jointNumbers):
-        self.nnType= nnType
+        self.nnType = nnType
         self.jointNumbers = jointNumbers
         self.isSplitEnd = True
         self.mergedPacket = self.MergedPacket()
@@ -127,7 +129,7 @@ class Pose2DPacketSpliter:
     # 데이터 입력 받는 함수
     def put_data(self, client_socket, frameID, joints):
         # 0번은 초기화 용
-        if(frameID == 0):
+        if (frameID == 0):
             return
 
         self.mergedPacket.client_socket = client_socket
@@ -143,22 +145,22 @@ class Pose2DPacketSpliter:
     def get_packet_byte(self):
         # 이번 분리 패킷의 data Size 결정
         dataSize = self.mergedPacket.jointWholeSize - self.mergedPacket.nextOffset
-        if(dataSize > NetworkInfo.PACKET_DATA_SIZE_LIMIT):
+        if (dataSize > NetworkInfo.PACKET_DATA_SIZE_LIMIT):
             dataSize = NetworkInfo.PACKET_DATA_SIZE_LIMIT
 
         # 이번 분리 패킷의 order 결정
         order = 0
-        if(self.mergedPacket.nextOffset == 0):
+        if (self.mergedPacket.nextOffset == 0):
             order = order + Order.First
-        if((self.mergedPacket.nextOffset + dataSize) >= self.mergedPacket.jointWholeSize):
+        if ((self.mergedPacket.nextOffset + dataSize) >= self.mergedPacket.jointWholeSize):
             order = order + Order.End
 
         # packet {header, struct, data} 생성 : 역순으로 생성
         packetData = self.mergedPacket.jointBytes[
                      self.mergedPacket.nextOffset: (self.mergedPacket.nextOffset + dataSize)]
         packetStructByte = Response2DPosePacketStruct(self.mergedPacket.frameID, self.mergedPacket.jointWholeSize,
-                                                  dataSize, self.mergedPacket.result, self.nnType,
-                                                  self.mergedPacket.nextOffset, order, self.jointNumbers).to_bytes()
+                                                      dataSize, self.mergedPacket.result, self.nnType,
+                                                      self.mergedPacket.nextOffset, order, self.jointNumbers).to_bytes()
 
         header = PacketHeader(MsgType.RESPONSE_2DPOSE, len(packetStructByte), len(packetData))
         headerBytes = header.to_bytes()
@@ -171,7 +173,7 @@ class Pose2DPacketSpliter:
 
         # 다음 패킷 분리 사이클을 위한 후처리
         self.mergedPacket.nextOffset = self.mergedPacket.nextOffset + dataSize
-        if((order & Order.End) == Order.End):
+        if ((order & Order.End) == Order.End):
             self.isSplitEnd = True
 
         return (self.mergedPacket.client_socket, packetByte)
@@ -205,12 +207,12 @@ class SegPacketSpliter:
 
         self.mergedPacket.client_socket = client_socket
         self.mergedPacket.frameID = frameID
-        #self.mergedPacket.maskBytes = mask_array.tobytes('C')
-        #encode_param = [int(cv2.IMWRITE_JPEG_QUALITY),90]
+        # self.mergedPacket.maskBytes = mask_array.tobytes('C')
+        # encode_param = [int(cv2.IMWRITE_JPEG_QUALITY),90]
         encode_result, mask_jpg = cv2.imencode('.jpg', mask_array, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
         self.mergedPacket.maskBytes = mask_jpg.tostring()
         self.mergedPacket.maskWholeSize = len(self.mergedPacket.maskBytes)
-        #print(str(self.mergedPacket.maskWholeSize))
+        # print(str(self.mergedPacket.maskWholeSize))
         self.mergedPacket.nextOffset = 0
         self.mergedPacket.result = 0
         self.mergedPacket.width = mask_array.shape[1]
@@ -235,8 +237,9 @@ class SegPacketSpliter:
         packetData = self.mergedPacket.maskBytes[
                      self.mergedPacket.nextOffset: (self.mergedPacket.nextOffset + dataSize)]
         packetStructByte = ResponseSegmentationPacketStruct(self.mergedPacket.frameID, self.mergedPacket.maskWholeSize,
-                                                      dataSize, self.mergedPacket.result, self.nnType,
-                                                      self.mergedPacket.nextOffset, order, self.mergedPacket.width,
+                                                            dataSize, self.mergedPacket.result, self.nnType,
+                                                            self.mergedPacket.nextOffset, order,
+                                                            self.mergedPacket.width,
                                                             self.mergedPacket.height).to_bytes()
 
         header = PacketHeader(MsgType.RESPONSE_SEGMENTATION, len(packetStructByte), len(packetData))
@@ -261,9 +264,10 @@ def read_header(bytes):
     header = PacketHeader.from_bytes(bytes)
     return header
 
+
 # packetData 필요 없는 packet 빠르게 만들어서 헤더까지 붙이고 bytes로 넘겨주는 함수
 def quick_create_packet(msgType, input_tuple):
     packetStructByte = packetStructDict[msgType](input_tuple).to_bytes()
-    #print(str(msgType) +', ' + str(len(packetStructByte))+', ' + str(0))
+    # print(str(msgType) +', ' + str(len(packetStructByte))+', ' + str(0))
     packetHeaderByte = PacketHeader(msgType, len(packetStructByte), 0).to_bytes()
     return packetHeaderByte + packetStructByte
