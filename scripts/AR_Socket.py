@@ -220,6 +220,26 @@ def recv_thread(client_socket, addr, socketQ, client_manager, config):
                             'frame': img,
                             'option': nnType})
 
+                # Pose2D : AlphaPose 요청
+                if ((nnType & NNType.BMC) == NNType.BMC):
+                    if not config.UseBMC:
+                        quick_response_packet_byte = quick_create_packet(MsgType.ERROR, (ErrorType.UnOpen_NN))
+                        sendall(client_socket, quick_response_packet_byte)
+                    elif (socketQ.BMCInputQ.full()):
+                        # print('one get, one put')
+                        socketQ.BMCInputQ.get()
+                        socketQ.BMCInputQ.put({
+                            'client_socket': client_socket,
+                            'frame_id': frameID,
+                            'frame': img,
+                            'option': nnType})
+                    else:
+                        socketQ.BMCInputQ.put({
+                            'client_socket': client_socket,
+                            'frame_id': frameID,
+                            'frame': img,
+                            'option': nnType})
+
         # 이미지 연산 패킷이 아닐 경우 : 바로 대응함
         else:
             # 딥러닝 서비스 접속 요청 패킷 반응
@@ -309,7 +329,7 @@ def recv_thread(client_socket, addr, socketQ, client_manager, config):
                 react_normal = packet_react(header, packetStruct, packetData)
 
                 # 수신한 패킷을 반응할 때 에러가 발생한 경우
-                if (not react_normal):
+                if not react_normal:
                     break
 
             except (Exception, OSError) as e:
