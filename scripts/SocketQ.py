@@ -1,5 +1,7 @@
 from multiprocessing import Queue
 import cv2
+import os
+
 
 class SocketQ:
     def __init__(self, config):
@@ -7,8 +9,8 @@ class SocketQ:
 
         # 큐에 이미지 미리 넣어놓는 함수
         def InitQ(Q, count):
-            init_img = cv2.imread('init.jpg')
-            
+            init_img = cv2.imread(os.path.dirname(__file__) + '\\..\\data\\init.jpg')
+
             # 프로세스 개수만큼 초기화용 이미 넣어둠. 정확하지는 않음
             for i in range(count):
                 Q.put({
@@ -16,7 +18,7 @@ class SocketQ:
                     'frame_id': 0,
                     'frame': init_img,
                     'option': 0})
-        
+
         # 소켓 I/O 큐 생성
         self.FastPoseInputQ = Queue(maxsize=config.Q_MAX_SIZE)
         self.FastPoseOutputQ = Queue(maxsize=config.Q_MAX_SIZE)
@@ -26,7 +28,7 @@ class SocketQ:
         self.YolactOutputQ = Queue(maxsize=config.Q_MAX_SIZE)
         self.BMCInputQ = Queue(maxsize=config.Q_MAX_SIZE)
         self.BMCOutputQ = Queue(maxsize=config.Q_MAX_SIZE)
-    
+
         # 각 프로세스 개수만큼 초기화 이미지 입력
         InitQ(self.FastPoseInputQ, config.FastPoseProcessNum)
         InitQ(self.AlphaPoseInputQ, config.AlphaPoseProcessNum)

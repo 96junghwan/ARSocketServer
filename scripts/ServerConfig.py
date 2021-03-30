@@ -1,9 +1,11 @@
 
 class ServerCfg:
 
+    # os.path.dirname(__file__) + '\\..\\..\\..\\AlphaPose\\' 이런 방식으로 현재 스크립트 기준으로 파일 찾기
+
     def __init__(self):
         # 서버 신경망 사용 여부 세팅
-        self.UseFastPose = False
+        self.UseFastPose = True
         self.UseAlphaPose = False
         self.UseYolact = False
         self.UseBMC = False
