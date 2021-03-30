@@ -169,6 +169,29 @@ class Response2DPosePacketStruct(NamedTuple):
         return cls._make(struct.unpack(cls.form_str, bytes))
 
 
+# 추가 필요 : C# 측과 협의
+class Response3DPosePacketStruct(NamedTuple):
+    frameID: np.int32
+    jointWholeSize: np.uint32
+    dataSize: np.uint16
+    result: np.uint16
+    nnType: np.int32
+    offset: np.uint32
+    order: np.int32
+    jointNumbers: np.uint16
+
+    # static variable
+    form_str = '<iIHHiIiH'
+
+    def to_bytes(self):
+        return struct.pack(self.form_str, self.frameID, self.jointWholeSize, self.dataSize,
+                           self.result, self.nnType, self.offset, self.order, self.jointNumbers)
+
+    @classmethod
+    def from_bytes(cls, bytes):
+        return cls._make(struct.unpack(cls.form_str, bytes))
+
+
 packetStructDict = {
         MsgType.WARNING: WarningPacketStruct,
         MsgType.ERROR: ErrorPacketStruct,
@@ -181,5 +204,6 @@ packetStructDict = {
         MsgType.RESPONSE_ACCESS: ResponseAccessPacketStruct,
         MsgType.RESPONSE_SERVER_STATUS: ResponseServerStatusPacketStruct,
         MsgType.RESPONSE_SEGMENTATION: ResponseSegmentationPacketStruct,
-        MsgType.RESPONSE_2DPOSE: Response2DPosePacketStruct
+        MsgType.RESPONSE_2DPOSE: Response2DPosePacketStruct,
+        MsgType.RESPONSE_3DPOSE: Response3DPosePacketStruct
 }

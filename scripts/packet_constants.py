@@ -17,6 +17,7 @@ class MsgType:
     RESPONSE_SERVER_STATUS = 2001
     RESPONSE_SEGMENTATION = 2002
     RESPONSE_2DPOSE = 2003
+    RESPONSE_3DPOSE = 2004
 
 class WarningType:
     SERVER_GETTING_BUSY = 0
@@ -61,6 +62,7 @@ class NNType:
     YOLACT = 1
     FASTPOSE = 2
     ALPHAPOSE = 4
+    BMC = 8
 
 class Order:
     First = 1
@@ -70,3 +72,4 @@ class Order:
 class JointNumber:
     FASTPOSE = 13
     ALPHAPOSE = 18
+    BMC = 49

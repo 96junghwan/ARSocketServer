@@ -2,9 +2,6 @@
 import ServerConfig
 import SocketQ
 import AR_Socket
-import FastPose.Server_FastPose
-import AlphaPose.Server_AlphaPose
-import YOLACT.Server_YOLACT
 from multiprocessing import Process
 from packet_constants import *
 import numpy as np
@@ -18,6 +15,7 @@ def init_NNs(socketQ, config):
     # FastPose 신경망 시작
     if config.UseFastPose:
         # 데이터 소켓 전송 프로세스 생성 및 시작
+        import FastPose.Server_FastPose
         proc = Process(target=AR_Socket.SendResultProcess, args=(socketQ.FastPoseOutputQ, NNType.FASTPOSE,))
         proc.daemon = False
         procs.append(proc)
@@ -31,6 +29,7 @@ def init_NNs(socketQ, config):
 
     # AlphaPose 신경망 시작
     if config.UseAlphaPose:
+        import AlphaPose.Server_AlphaPose
         # 데이터 소켓 전송 프로세스 생성 및 시작
         proc = Process(target=AR_Socket.SendResultProcess, args=(socketQ.AlphaPoseOutputQ, NNType.ALPHAPOSE,))
         proc.daemon = False
@@ -46,6 +45,7 @@ def init_NNs(socketQ, config):
     # Yolact 신경망 시작
     if config.UseYolact:
         # 데이터 소켓 전송 프로세스 생성 및 시작
+        import YOLACT.Server_YOLACT
         proc = Process(target=AR_Socket.SendResultProcess, args=(socketQ.YolactOutputQ, NNType.YOLACT,))
         proc.daemon = False
         procs.append(proc)
@@ -53,6 +53,22 @@ def init_NNs(socketQ, config):
 
         for i in range(config.YolactProcessNum):
             proc = Process(target=YOLACT.Server_YOLACT.run_server, args=(socketQ.YolactInputQ, socketQ.YolactOutputQ,))
+            proc.daemon = False
+            procs.append(proc)
+            proc.start()
+
+    # Yolact 신경망 시작
+    if config.UseBMC:
+        # 데이터 소켓 전송 프로세스 생성 및 시작
+        import BMC.Server_BMC
+        proc = Process(target=AR_Socket.SendResultProcess, args=(socketQ.BMCOutputQ, NNType.YOLACT,))
+        proc.daemon = False
+        procs.append(proc)
+        proc.start()
+
+        for i in range(config.YolactProcessNum):
+            proc = Process(target=YOLACT.Server_YOLACT.run_server,
+                            args=(socketQ.YolactInputQ, socketQ.YolactOutputQ,))
             proc.daemon = False
             procs.append(proc)
             proc.start()

@@ -4,13 +4,15 @@ class ServerCfg:
     def __init__(self):
         # 서버 신경망 사용 여부 세팅
         self.UseFastPose = False
-        self.UseAlphaPose = True
+        self.UseAlphaPose = False
         self.UseYolact = False
+        self.UseBMC = False
 
         # 각 신경망 별 프로세스 할당 개수 세팅
         self.FastPoseProcessNum = 1
         self.AlphaPoseProcessNum = 1
         self.YolactProcessNum = 1
+        self.BMCProcessNum = 1
 
         # 큐 사이즈 세팅
         self.Q_MAX_SIZE = 10
@@ -25,4 +27,4 @@ class ServerCfg:
 
         # 서버 접속 코드
         self.developer_code = "99.99.99"
-        self.standard_code = "01.04.01"
+        self.standard_code = "01.05.01"

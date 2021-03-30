@@ -24,11 +24,14 @@ class SocketQ:
         self.AlphaPoseOutputQ = Queue(maxsize=config.Q_MAX_SIZE)
         self.YolactInputQ = Queue(maxsize=config.Q_MAX_SIZE)
         self.YolactOutputQ = Queue(maxsize=config.Q_MAX_SIZE)
+        self.BMCInputQ = Queue(maxsize=config.Q_MAX_SIZE)
+        self.BMCOutputQ = Queue(maxsize=config.Q_MAX_SIZE)
     
         # 각 프로세스 개수만큼 초기화 이미지 입력
         InitQ(self.FastPoseInputQ, config.FastPoseProcessNum)
         InitQ(self.AlphaPoseInputQ, config.AlphaPoseProcessNum)
         InitQ(self.YolactInputQ, config.YolactProcessNum)
+        InitQ(self.BMCInputQ, config.BMCProcessNum)
 
         # 임시 관리를 위해 리스트에 큐 전체 추가
         self.QList.append(self.FastPoseInputQ)
@@ -37,6 +40,8 @@ class SocketQ:
         self.QList.append(self.AlphaPoseOutputQ)
         self.QList.append(self.YolactInputQ)
         self.QList.append(self.YolactOutputQ)
+        self.QList.append(self.BMCInputQ)
+        self.QList.append(self.BMCOutputQ)
 
     # 소켓 큐 전체 닫는 함수
     def close(self, config):
