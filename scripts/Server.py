@@ -57,7 +57,7 @@ def init_NNs(socketQ, config):
             procs.append(proc)
             proc.start()
 
-    # Yolact 신경망 시작
+    # BMC 신경망 시작
     if config.UseBMC:
         # 데이터 소켓 전송 프로세스 생성 및 시작
         import demo.Server_BMC
@@ -67,7 +67,7 @@ def init_NNs(socketQ, config):
         proc.start()
 
         for i in range(config.YolactProcessNum):
-            proc = Process(target=Server_BMC.run_server,
+            proc = Process(target=demo.Server_BMC.run_server,
                            args=(socketQ.BMCInputQ, socketQ.BMCOutputQ,))
             proc.daemon = False
             procs.append(proc)
