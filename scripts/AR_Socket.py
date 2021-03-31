@@ -220,7 +220,7 @@ def recv_thread(client_socket, addr, socketQ, client_manager, config):
                             'frame': img,
                             'option': nnType})
 
-                # Pose2D : AlphaPose 요청
+                # Pose3D : BMC 요청
                 if ((nnType & NNType.BMC) == NNType.BMC):
                     if not config.UseBMC:
                         quick_response_packet_byte = quick_create_packet(MsgType.ERROR, (ErrorType.UnOpen_NN))
@@ -345,26 +345,33 @@ def SendResultProcess(sendQ, nnType):
         dataSpliter = Pose2DPacketSpliter(nnType, JointNumber.FASTPOSE)
     elif (nnType == NNType.ALPHAPOSE):
         dataSpliter = Pose2DPacketSpliter(nnType, JointNumber.ALPHAPOSE)
+    elif (nnType == NNType.BMC):
+        dataSpliter = Pose3DPacketSpliter(nnType)
     else:
         dataSpliter = None
 
     # sendQ에서 꺼내서 데이터 분리기에 넣고 다 보낼 때 까지가 한 사이클
     while (True):
-        if not sendQ.empty():
-            input = sendQ.get()
+        # 큐 비었는지 검사
+        if sendQ.empty():
+            time.sleep(0.01)
+            continue
+
+        # 큐에서 송신할 데이터 출력하고 데이터 분리기에 입력
+        input = sendQ.get()
+        if (nnType == NNType.BMC):
+            dataSpliter.put_data(input['client_socket'], input['frame_id'], input['people'], input['result_data'])
+        else:
             dataSpliter.put_data(input['client_socket'], input['frame_id'], input['result_data'])
 
-            # 결과 데이터 다 쪼개서 보낼 동안 반복함
-            while (not dataSpliter.isSplitEnd):
-                (client_socket, packetByte) = dataSpliter.get_packet_byte()
-                try:
-                    sendall(client_socket, packetByte)
-                except (Exception, OSError) as e:
-                    # print(e)
-                    break  # 절대로 멈춰서는 안됨
+        # 쪼갠 데이터 다 전송
+        while (not dataSpliter.isSplitEnd):
+            (client_socket, packetByte) = dataSpliter.get_packet_byte()
+            try:
+                sendall(client_socket, packetByte)
+            except (Exception, OSError) as e:
+                break  # 보내는데 에러 생겼다면 멈추기
 
-        else:
-            time.sleep(0.01)
 
 
 # ===== 송수신 함수

@@ -72,4 +72,3 @@ class Order:
 class JointNumber:
     FASTPOSE = 13
     ALPHAPOSE = 18
-    BMC = 49

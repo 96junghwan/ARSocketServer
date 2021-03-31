@@ -178,14 +178,14 @@ class Response3DPosePacketStruct(NamedTuple):
     nnType: np.int32
     offset: np.uint32
     order: np.int32
-    jointNumbers: np.uint16
+    people: np.uint16
 
     # static variable
     form_str = '<iIHHiIiH'
 
     def to_bytes(self):
         return struct.pack(self.form_str, self.frameID, self.jointWholeSize, self.dataSize,
-                           self.result, self.nnType, self.offset, self.order, self.jointNumbers)
+                           self.result, self.nnType, self.offset, self.order, self.people)
 
     @classmethod
     def from_bytes(cls, bytes):

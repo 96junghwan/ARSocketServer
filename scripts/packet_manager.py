@@ -179,6 +179,77 @@ class Pose2DPacketSpliter:
         return (self.mergedPacket.client_socket, packetByte)
 
 
+# 3D Pose 결과 데이터 분리기
+class Pose3DPacketSpliter:
+    # 내부 패킷 클래스
+    class MergedPacket:
+        def __init__(self):
+            self.client_socket = socket
+            self.frameID = 0
+            self.jointWholeSize = 0
+            self.result = 0
+            self.people = 0
+            self.jointBytes = bytearray()
+            self.nextOffset = 0
+
+    def __init__(self, nnType):
+        self.nnType = nnType
+        self.isSplitEnd = True
+        self.mergedPacket = self.MergedPacket()
+
+    # 데이터 입력 받는 함수
+    def put_data(self, client_socket, frameID, people, resultBytes):
+        # 0번은 초기화 용
+        if (frameID == 0):
+            return
+
+        self.mergedPacket.client_socket = client_socket
+        self.mergedPacket.frameID = frameID
+        self.mergedPacket.nextOffset = 0
+        self.mergedPacket.result = 0
+        self.mergedPacket.people = people
+        self.isSplitEnd = False
+        self.mergedPacket.jointBytes = resultBytes
+        self.mergedPacket.jointWholeSize = len(self.mergedPacket.jointBytes)
+
+    # 현존하는 멤버를 가지고 패킷 쪼개서 bytes로 넘겨주는 함수
+    def get_packet_byte(self):
+        # 이번 분리 패킷의 data Size 결정
+        dataSize = self.mergedPacket.jointWholeSize - self.mergedPacket.nextOffset
+        if (dataSize > NetworkInfo.PACKET_DATA_SIZE_LIMIT):
+            dataSize = NetworkInfo.PACKET_DATA_SIZE_LIMIT
+
+        # 이번 분리 패킷의 order 결정
+        order = 0
+        if (self.mergedPacket.nextOffset == 0):
+            order = order + Order.First
+        if ((self.mergedPacket.nextOffset + dataSize) >= self.mergedPacket.jointWholeSize):
+            order = order + Order.End
+
+        # packet {header, struct, data} 생성 : 역순으로 생성
+        packetData = self.mergedPacket.jointBytes[
+                     self.mergedPacket.nextOffset: (self.mergedPacket.nextOffset + dataSize)]
+        packetStructByte = Response3DPosePacketStruct(self.mergedPacket.frameID, self.mergedPacket.jointWholeSize,
+                                                      dataSize, self.mergedPacket.result, self.nnType,
+                                                      self.mergedPacket.nextOffset, order, self.mergedPacket.people).to_bytes()
+
+        header = PacketHeader(MsgType.RESPONSE_3DPOSE, len(packetStructByte), len(packetData))
+        headerBytes = header.to_bytes()
+
+        # 결과 패킷 바이트 제작
+        packetByte = bytearray(NetworkInfo.HEADER_SIZE + header.packetStructSize + header.packetDataSize)
+        packetByte[0:] = headerBytes
+        packetByte[NetworkInfo.HEADER_SIZE:] = packetStructByte
+        packetByte[NetworkInfo.HEADER_SIZE + header.packetStructSize:] = packetData
+
+        # 다음 패킷 분리 사이클을 위한 후처리
+        self.mergedPacket.nextOffset = self.mergedPacket.nextOffset + dataSize
+        if ((order & Order.End) == Order.End):
+            self.isSplitEnd = True
+
+        return (self.mergedPacket.client_socket, packetByte)
+
+
 # Seg SendThread가 하나 갖고 있음
 # 세그멘테이션 결과 마스크 받아서 분할하여 해당하는 SendQ에 하나씩 집어넣는 클래스
 class SegPacketSpliter:
